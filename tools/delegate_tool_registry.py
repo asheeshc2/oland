@@ -108,7 +108,7 @@ def _resume_spec(record: dict[str, Any]) -> Optional[dict[str, Any]]:
     session_id = getattr(child, "session_id", None)
     if not isinstance(build, dict) or "route" not in build or not isinstance(session_id, str) or not session_id:
         return None
-    return {**build, "session_id": session_id, "model": record.get("model")}
+    return {**build, "session_id": session_id, "model": record.get("model"),\n            "verification": getattr(child, "_delegate_verification", None)}
 
 def _close_subagent_steering(subagent_id: str, agent: Any) -> Optional[str]:
     """Atomically close steer acceptance and drain its final durable artifact. ``steer_subagent`` holds the same
