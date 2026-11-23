@@ -895,6 +895,25 @@ DELEGATE_TASK_SCHEMA = {
                             "files do NOT belong here — put paths in 'context' instead.",
                             items={"type": "string"},
                         ),
+                        "verification": _p(
+                            "object",
+                            "Optional declarative acceptance criteria for this task. 'expected_files' lists relative "
+                            "deliverable paths; 'checks' lists review instructions. These are validated as task "
+                            "metadata only; they are not automatically executed by the parent.",
+                            properties={
+                                "expected_files": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                    "description": "Relative file paths expected as deliverables.",
+                                },
+                                "checks": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                    "description": "Review instructions; not shell commands and not auto-executed.",
+                                },
+                            },
+                            additionalProperties=False,
+                        ),
                         "group": _p(
                             "string",
                             "Result-delivery bucket. Tasks sharing a group return together in ONE message once all of "
