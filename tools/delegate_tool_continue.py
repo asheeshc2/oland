@@ -199,7 +199,8 @@ def _start(
         if err:
             return None, err
         db.sessions.reopen(session_id)  # its close() ended it; the continued child's close() ends it again
-        children[0][2]._delegate_verification = spec.get("verification")\n        children[0][2]._delegate_continue_history = history
+        children[0][2]._delegate_verification = spec.get("verification")
+        children[0][2]._delegate_continue_history = history
         children[0][2]._delegate_run_origin = run_origin  # a parent's own continue ends automatic resumes of it
         from tools.delegate_tool_resumable import hold_claim, last_workspace
         children[0][2]._delegate_continue_workspace = last_workspace(parent_agent, sid)
