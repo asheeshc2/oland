@@ -102,3 +102,21 @@ def test_verification_rejects_windows_absolute_path():
     }])
     assert tasks is None
     assert "unsafe expected file path" in error
+
+def test_verification_contract_is_preserved_in_resume_spec():
+    from types import SimpleNamespace
+
+    from tools.delegate_tool_resumable import _spec
+
+    contract = {"expected_files": ["calculator.py"], "checks": ["Review behavior"]}
+    child = SimpleNamespace(
+        _delegate_resume={"goal": "Implement calculator"},
+        _delegate_verification=contract,
+        session_id="child-session",
+        model="test-model",
+    )
+
+    result = _spec(child)
+
+    assert result["verification"] == contract
+
