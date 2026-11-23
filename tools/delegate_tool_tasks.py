@@ -64,6 +64,41 @@ def _validate_batch_tasks(task_list: list[dict[str, Any]]) -> Optional[str]:
             )
     return None
 
+
+def _validate_task_verification(task: dict[str, Any], index: int) -> Optional[str]:
+    """Validate an optional, declarative per-task verification contract."""
+    verification = task.get("verification")
+    if verification is None:
+        return None
+    if not isinstance(verification, dict):
+        return f"Task {index} 'verification' must be an object."
+
+    allowed = {"expected_files", "checks"}
+    unknown = set(verification) - allowed
+    if unknown:
+        return f"Task {index} 'verification' contains unsupported fields: {sorted(unknown)}"
+    if not verification:
+        return f"Task {index} 'verification' cannot be empty."
+
+    for field in ("expected_files", "checks"):
+        if field not in verification:
+            continue
+        values = verification[field]
+        if not isinstance(values, list) or not values:
+            return f"Task {index} verification.{field} must be a non-empty array."
+        for value in values:
+            if not isinstance(value, str) or not value.strip():
+                return f"Task {index} verification.{field} entries must be non-empty strings."
+
+    from pathlib import PurePosixPath, PureWindowsPath
+    for item in verification.get("expected_files", []):
+        posix = PurePosixPath(item)
+        windows = PureWindowsPath(item)
+        if (posix.is_absolute() or windows.is_absolute() or windows.drive
+                or ".." in posix.parts or ".." in windows.parts):
+            return f"Task {index} verification contains an unsafe expected file path: {item!r}"
+    return None
+
 def _normalize_task_list(
     goal, context, tasks, output_schema, top_role: str, max_children: int
 ) -> tuple[Optional[list[dict[str, Any]]], Optional[str]]:
@@ -100,6 +135,9 @@ def _normalize_task_list(
             return None, f"Task {i} must be an object, got {type(task).__name__}."
         if not task.get("goal", "").strip():
             return None, f"Task {i} is missing a 'goal'."
+        verification_error = _validate_task_verification(task, i)
+        if verification_error:
+            return None, verification_error
     # The single-goal form is exempt from the batch gate (short goals are valid there).
     batch_error = _validate_batch_tasks(task_list) if isinstance(tasks, list) else None
     return (None, batch_error) if batch_error else (task_list, None)
