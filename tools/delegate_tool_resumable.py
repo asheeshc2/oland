@@ -714,7 +714,10 @@ def last_workspace(parent_agent: Any, sid: str) -> Optional[dict[str, Any]]:
     if not (isinstance(cwd, str) and os.path.isdir(cwd)):
         return None
     worktree = record.get("worktree") if isinstance(record.get("worktree"), dict) else None
-    return {"cwd": cwd, "worktree": worktree if worktree and os.path.isdir(worktree.get("path") or "") else None}
+    worktree = worktree if worktree and os.path.isdir(worktree.get("path") or "") else None
+    start_cwd = record.get("start_cwd")
+    workspace = (worktree or {}).get("path") or (start_cwd if isinstance(start_cwd, str) and os.path.isdir(start_cwd) else cwd)
+    return {"cwd": cwd, "workspace": workspace, "worktree": worktree}
 
 
 # ── worktree sweep pin ─────────────────────────────────────────────────────
