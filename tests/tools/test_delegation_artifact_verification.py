@@ -46,3 +46,26 @@ def test_symlink_escape_is_rejected(tmp_path):
 def test_empty_expected_files_passes(tmp_path):
     result = verify_expected_files(str(tmp_path), [])
     assert result["files_valid"] is True
+
+
+
+def test_invalid_workspace_fails_closed(tmp_path):
+    result = verify_expected_files(str(tmp_path / "does-not-exist"), ["calculator.py"])
+    assert result["files_valid"] is False
+    assert result["invalid_paths"] == ["<invalid workspace>"]
+
+
+def test_windows_absolute_path_is_rejected(tmp_path):
+    result = verify_expected_files(str(tmp_path), ["C:\\Windows\\system.ini"])
+    assert result["files_valid"] is False
+    assert result["invalid_paths"] == ["C:\\Windows\\system.ini"]
+
+
+def test_symlink_escape_is_classified_as_invalid_path(tmp_path):
+    outside = tmp_path.parent / "outside-review-test-2.txt"
+    outside.write_text("outside")
+    (tmp_path / "escape.txt").symlink_to(outside)
+
+    result = verify_expected_files(str(tmp_path), ["escape.txt"])
+    assert result["files_valid"] is False
+    assert result["invalid_paths"] == ["escape.txt"]
