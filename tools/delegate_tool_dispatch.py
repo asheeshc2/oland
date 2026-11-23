@@ -68,7 +68,8 @@ class _Batch:
 
     def run_child(self, i: int, task: dict[str, Any], child: Any) -> dict[str, Any]:
         from tools.delegate_tool import _run_single_child
-        return _run_single_child(task_index=i, goal=task["goal"], child=child, parent_agent=self.parent_agent,\n                                 verification=task.get("verification"), **self.owner_kwargs())
+        return _run_single_child(task_index=i, goal=task["goal"], child=child, parent_agent=self.parent_agent,
+                                 verification=task.get("verification"), **self.owner_kwargs())
 
 
 def _announce_batch(parent_agent, n_tasks: int, live_deleg_id: Optional[str]) -> None:
