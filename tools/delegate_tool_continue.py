@@ -183,7 +183,7 @@ def _start(
         err = _oneshot_spawn_budget(parent_agent, 1)
         if err:
             return None, err
-        task_list = [{"goal": message}]  # the run's user turn; the system prompt is rebuilt from the original goal
+        task_list = [{"goal": message, **({"verification": spec["verification"]} if isinstance(spec.get("verification"), dict) else {})}]  # next turn
         live_home = _parent_live_home(parent_agent)
         live_id, writers, paths = create_live_transcripts(
             task_list, None, model=spec.get("model"), provider=route.creds.get("provider"), home=live_home,
@@ -199,7 +199,7 @@ def _start(
         if err:
             return None, err
         db.sessions.reopen(session_id)  # its close() ended it; the continued child's close() ends it again
-        children[0][2]._delegate_continue_history = history
+        children[0][2]._delegate_verification = spec.get("verification")\n        children[0][2]._delegate_continue_history = history
         children[0][2]._delegate_run_origin = run_origin  # a parent's own continue ends automatic resumes of it
         from tools.delegate_tool_resumable import hold_claim, last_workspace
         children[0][2]._delegate_continue_workspace = last_workspace(parent_agent, sid)
