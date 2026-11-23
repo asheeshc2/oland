@@ -94,11 +94,11 @@ def test_child_terminal_verification_uses_child_task_workspace(monkeypatch):
         })
 
     monkeypatch.setattr(tools.delegate_tool_routes, "child_profile_scope", lambda child: nullcontext())
-    monkeypatch.setattr(tools.terminal_tool, "get_session_cwd", lambda task_id: "/child/workspace")
     monkeypatch.setattr(tools.terminal_tool, "terminal_tool", fake_terminal)
 
     result = verify_expected_files_in_child(
         task_id="child-123",
+        workspace="/child/workspace",
         expected_files=["calculator.py"],
         child=SimpleNamespace(),
     )
