@@ -405,7 +405,7 @@ def _build_child_agent(
 
 def _run_single_child(
     task_index: int, goal: str, child=None, parent_agent=None, *, owner_session_id: Optional[str] = None,
-    owner_transport: Any = None, owner_session_record: Any = None, **_kwargs,
+    owner_transport: Any = None, owner_session_record: Any = None, verification: Optional[dict[str, Any]] = None, **_kwargs,
 ) -> dict[str, Any]:
     """Run a pre-built child agent (called from a worker thread) and return its result entry.
 
@@ -438,6 +438,8 @@ def _run_single_child(
         release_unstarted(child)
         raise
     run = _ChildRun(child, parent_agent, task_index, goal, _subagent_id, child_progress_cb, heartbeat=heartbeat)
+    if isinstance(verification, dict):
+        child._delegate_verification = verification
     # Set when a timed-out Future still owns the child: closing it from this
     # thread before the worker settles races the conversation's finally path.
     _child_close_deferred = False
@@ -465,6 +467,20 @@ def _run_single_child(
 
         duration = run.elapsed()
         entry = _build_result_entry(child, result, task_index, duration, schema)
+        contract = getattr(child, "_delegate_verification", None)
+        if isinstance(contract, dict):
+            from tools.delegate_review import verify_expected_files_in_child
+            verification_result = verify_expected_files_in_child(
+                task_id=run.child_task_id, expected_files=contract.get("expected_files", []), child=child,
+            )
+            if contract.get("checks"):
+                verification_result["checks_status"] = "not_executed"
+                verification_result["checks_note"] = "Declarative review criteria are not executed automatically."
+            entry["verification"] = verification_result
+            entry["accepted"] = verification_result.get("accepted") is True and not contract.get("checks")
+            if verification_result.get("files_valid") is False:
+                entry["status"] = "failed"
+                entry["error"] = "Delegation verification failed: expected files are missing or invalid."
         run.append_sibling_write_reminder(entry)
         run.account_background_processes(entry)
         run.emit_complete(result, entry, duration)
