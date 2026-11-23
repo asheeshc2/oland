@@ -167,15 +167,16 @@ def verify_expected_files_in_child(*, task_id: str, expected_files: list[str], c
             "print(json.dumps({'files_valid':not missing and not invalid,'checked_files':checked,"
             "'missing_files':missing,'invalid_paths':invalid}))"
         )
+        encoded_script = base64.b64encode(script.encode("utf-8")).decode("ascii")
         with child_profile_scope(child):
             workspace = get_session_cwd(task_id)
             if not isinstance(workspace, str) or not workspace.strip():
                 raise RuntimeError("Child workspace is unavailable.")
-            command = "python3 -c " + shlex.quote(script)
+            command = 'python3 -c "exec(__import__(\'base64\').b64decode(\'' + encoded_script + '\'))"'
             raw = terminal_tool(command, task_id=task_id, workdir=workspace, timeout=30)
             envelope = json.loads(raw) if isinstance(raw, str) else {}
             if not isinstance(envelope, dict) or envelope.get("exit_code") != 0:
-                command = "python -c " + shlex.quote(script)
+                command = 'python -c "exec(__import__(\'base64\').b64decode(\'' + encoded_script + '\'))"'
                 raw = terminal_tool(command, task_id=task_id, workdir=workspace, timeout=30)
                 envelope = json.loads(raw) if isinstance(raw, str) else {}
             if not isinstance(envelope, dict) or envelope.get("exit_code") != 0:
