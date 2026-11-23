@@ -50,41 +50,55 @@ def evaluate_review_verdict(review_text: Any) -> dict[str, Any]:
 def verify_expected_files(workspace: str, expected_files: list[str]) -> dict[str, Any]:
     """Verify expected deliverables exist inside the workspace.
 
-    Reject absolute paths, traversal, symlinks escaping the workspace,
-    and non-regular files. Never reads or executes deliverable contents.
+    Reject invalid workspaces, absolute paths, traversal, symlinks escaping
+    the workspace, and non-regular files. Never reads or executes file contents.
     """
-    from pathlib import Path
+    from pathlib import Path, PurePosixPath, PureWindowsPath
 
-    root = Path(workspace).resolve(strict=True)
+    checked_files: list[str] = []
+    missing_files: list[str] = []
+    invalid_paths: list[str] = []
 
-    if not root.is_dir():
+    try:
+        root = Path(workspace).resolve(strict=True)
+        if not root.is_dir():
+            raise NotADirectoryError(str(root))
+    except (OSError, RuntimeError, TypeError, ValueError):
         return {
             "files_valid": False,
             "checked_files": [],
             "missing_files": [],
-            "invalid_paths": [],
+            "invalid_paths": ["<invalid workspace>"],
         }
 
-    checked_files = []
-    missing_files = []
-    invalid_paths = []
+    if not isinstance(expected_files, list):
+        return {
+            "files_valid": False,
+            "checked_files": [],
+            "missing_files": [],
+            "invalid_paths": ["<expected_files must be a list>"],
+        }
 
     for item in expected_files:
         if not isinstance(item, str) or not item.strip():
             invalid_paths.append(str(item))
             continue
 
-        relative = Path(item)
-
-        if relative.is_absolute() or ".." in relative.parts:
+        posix = PurePosixPath(item)
+        windows = PureWindowsPath(item)
+        if (posix.is_absolute() or windows.is_absolute() or windows.drive
+                or ".." in posix.parts or ".." in windows.parts):
             invalid_paths.append(item)
             continue
 
         try:
-            candidate = (root / relative).resolve(strict=True)
+            candidate = (root / Path(item)).resolve(strict=True)
             candidate.relative_to(root)
-        except (OSError, ValueError, RuntimeError):
+        except FileNotFoundError:
             missing_files.append(item)
+            continue
+        except (OSError, ValueError, RuntimeError):
+            invalid_paths.append(item)
             continue
 
         if not candidate.is_file():
