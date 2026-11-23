@@ -471,7 +471,8 @@ def _run_single_child(
         if isinstance(contract, dict):
             from tools.delegate_review import verify_expected_files_in_child
             verification_result = verify_expected_files_in_child(
-                task_id=run.child_task_id, workspace=run.workspace,\n                expected_files=contract.get("expected_files", []), child=child,
+                task_id=run.child_task_id, workspace=run.workspace,
+                expected_files=contract.get("expected_files", []), child=child,
             )
             if contract.get("checks"):
                 verification_result["checks_status"] = "not_executed"
