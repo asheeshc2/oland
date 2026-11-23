@@ -120,3 +120,19 @@ def test_verification_contract_is_preserved_in_resume_spec():
 
     assert result["verification"] == contract
 
+def test_verification_contract_is_preserved_in_in_memory_resume_spec():
+    from types import SimpleNamespace
+
+    from tools.delegate_tool_registry import _resume_spec
+
+    contract = {"expected_files": ["calculator.py"]}
+    child = SimpleNamespace(
+        _delegate_resume={"goal": "Implement calculator", "route": object()},
+        _delegate_verification=contract,
+        session_id="child-session",
+    )
+
+    result = _resume_spec({"agent": child, "model": "test-model"})
+
+    assert result["verification"] == contract
+
