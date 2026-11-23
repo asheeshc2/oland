@@ -476,6 +476,8 @@ def _run_single_child(
             if contract.get("checks"):
                 verification_result["checks_status"] = "not_executed"
                 verification_result["checks_note"] = "Declarative review criteria are not executed automatically."
+                if verification_result.get("files_valid") is True:
+                    verification_result["verification_status"] = "partial"
             entry["verification"] = verification_result
             entry["accepted"] = verification_result.get("accepted") is True and not contract.get("checks")
             if verification_result.get("files_valid") is False:
