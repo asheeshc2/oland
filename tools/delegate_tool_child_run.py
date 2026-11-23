@@ -912,7 +912,8 @@ class _ChildRun:
             # the goal message instead (same turn, no system-prompt mutation).
             from tools.subagent_worktree import build_worktree_context_note
             self.goal = self.goal + build_worktree_context_note(self.worktree_info)
-        self.workspace = ((self.worktree_info or {}).get("path") or
+        self.workspace = ((resumed.get("workspace") if resumed else None) or
+                          (self.worktree_info or {}).get("path") or
                           (resumed.get("cwd") if resumed else parent_cwd))
         self.wall_start = time.time()
         self.parent_reads_snapshot = list(file_state.known_reads(self.parent_task_id)) if self.parent_task_id else []
