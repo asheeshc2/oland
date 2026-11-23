@@ -114,7 +114,7 @@ def verify_expected_files(workspace: str, expected_files: list[str]) -> dict[str
         "invalid_paths": invalid_paths,
     }
 
-def verify_expected_files_in_child(*, task_id: str, expected_files: list[str], child: Any) -> dict[str, Any]:
+def verify_expected_files_in_child(*, task_id: str, workspace: str, expected_files: list[str], child: Any) -> dict[str, Any]:
     """Verify expected files in the child's actual terminal environment.
 
     This read-only check uses the child's task id and profile scope so remote/container
@@ -143,7 +143,7 @@ def verify_expected_files_in_child(*, task_id: str, expected_files: list[str], c
 
     try:
         from tools.delegate_tool_routes import child_profile_scope
-        from tools.terminal_tool import get_session_cwd, terminal_tool
+        from tools.terminal_tool import terminal_tool
 
         payload = base64.b64encode(json.dumps({"expected_files": expected_files}).encode("utf-8")).decode("ascii")
         body = (
@@ -168,7 +168,6 @@ def verify_expected_files_in_child(*, task_id: str, expected_files: list[str], c
         )
         encoded_script = base64.b64encode(script.encode("utf-8")).decode("ascii")
         with child_profile_scope(child):
-            workspace = get_session_cwd(task_id)
             if not isinstance(workspace, str) or not workspace.strip():
                 raise RuntimeError("Child workspace is unavailable.")
             command = "python3 -c \"exec(__import__('base64').b64decode('" + encoded_script + "'))\""
