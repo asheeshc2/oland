@@ -65,3 +65,40 @@ def test_verification_contract_is_optional_in_schema():
 
     required = DELEGATE_TASK_SCHEMA["parameters"]["properties"]["tasks"]["items"]["required"]
     assert "verification" not in required
+
+
+
+def test_verification_rejects_empty_contract():
+    tasks, error = _normalize([{
+        "goal": "Implement a calculator",
+        "verification": {},
+    }])
+    assert tasks is None
+    assert "cannot be empty" in error
+
+
+def test_verification_rejects_non_array_checks():
+    tasks, error = _normalize([{
+        "goal": "Implement a calculator",
+        "verification": {"checks": "run tests"},
+    }])
+    assert tasks is None
+    assert "verification.checks" in error
+
+
+def test_verification_rejects_parent_traversal():
+    tasks, error = _normalize([{
+        "goal": "Implement a calculator",
+        "verification": {"expected_files": ["../outside.py"]},
+    }])
+    assert tasks is None
+    assert "unsafe expected file path" in error
+
+
+def test_verification_rejects_windows_absolute_path():
+    tasks, error = _normalize([{
+        "goal": "Implement a calculator",
+        "verification": {"expected_files": ["C:\\temp\\outside.py"]},
+    }])
+    assert tasks is None
+    assert "unsafe expected file path" in error
