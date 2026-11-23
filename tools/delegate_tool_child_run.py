@@ -834,6 +834,7 @@ class _ChildRun:
     heartbeat: Any = None
     child_start: float = field(default_factory=time.monotonic)
     worktree_info: Optional[dict[str, str]] = None
+    workspace: Optional[str] = None
     child_task_id: str = ""
     parent_task_id: Optional[str] = None
     wall_start: float = 0.0
@@ -911,6 +912,8 @@ class _ChildRun:
             # the goal message instead (same turn, no system-prompt mutation).
             from tools.subagent_worktree import build_worktree_context_note
             self.goal = self.goal + build_worktree_context_note(self.worktree_info)
+        self.workspace = ((self.worktree_info or {}).get("path") or
+                          (resumed.get("cwd") if resumed else parent_cwd))
         self.wall_start = time.time()
         self.parent_reads_snapshot = list(file_state.known_reads(self.parent_task_id)) if self.parent_task_id else []
         with _quiet("Durable subagent record failed: %s"):
