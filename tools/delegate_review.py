@@ -122,7 +122,6 @@ def verify_expected_files_in_child(*, task_id: str, expected_files: list[str], c
     """
     import base64
     import json
-    import shlex
 
     if not isinstance(expected_files, list):
         return {
@@ -172,11 +171,11 @@ def verify_expected_files_in_child(*, task_id: str, expected_files: list[str], c
             workspace = get_session_cwd(task_id)
             if not isinstance(workspace, str) or not workspace.strip():
                 raise RuntimeError("Child workspace is unavailable.")
-            command = 'python3 -c "exec(__import__(\'base64\').b64decode(\'' + encoded_script + '\'))"'
+            command = "python3 -c \"exec(__import__('base64').b64decode('" + encoded_script + "'))\""
             raw = terminal_tool(command, task_id=task_id, workdir=workspace, timeout=30)
             envelope = json.loads(raw) if isinstance(raw, str) else {}
             if not isinstance(envelope, dict) or envelope.get("exit_code") != 0:
-                command = 'python -c "exec(__import__(\'base64\').b64decode(\'' + encoded_script + '\'))"'
+                command = "python -c \"exec(__import__('base64').b64decode('" + encoded_script + "'))\""
                 raw = terminal_tool(command, task_id=task_id, workdir=workspace, timeout=30)
                 envelope = json.loads(raw) if isinstance(raw, str) else {}
             if not isinstance(envelope, dict) or envelope.get("exit_code") != 0:
